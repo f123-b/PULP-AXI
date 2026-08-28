@@ -25,3 +25,21 @@ jobs:
           test -f .deps/axi/src/axi_lite_to_apb.sv
           grep -q "module axi_lite_to_apb" .deps/axi/src/axi_lite_to_apb.sv
           git -C .deps/axi rev-parse HEAD | grep -q '^4da15979747f326bde2f9869c64e587ce599772c$'
+
+  upstream-verilator-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/fetch_upstream.sh
+      - name: Install Bender
+        uses: pulp-platform/pulp-actions/bender-install@v2
+        with:
+          version: 0.30.0
+      - name: Install Verilator
+        uses: veryl-lang/setup-verilator@v1
+      - name: Checkout PULP AXI dependencies
+        working-directory: .deps/axi
+        run: bender checkout
+      - name: Compile/lint actual upstream RTL
+        working-directory: .deps/axi
+        run: bash scripts/run_verilator.sh

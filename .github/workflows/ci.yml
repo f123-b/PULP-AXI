@@ -1,0 +1,27 @@
+name: verification-ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  reference-model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pytest
+      - run: python -m pytest -q
+
+  upstream-provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/fetch_upstream.sh
+      - name: Verify target RTL exists at pinned revision
+        run: |
+          test -f .deps/axi/src/axi_lite_to_apb.sv
+          grep -q "module axi_lite_to_apb" .deps/axi/src/axi_lite_to_apb.sv
+          git -C .deps/axi rev-parse HEAD | grep -q '^4da15979747f326bde2f9869c64e587ce599772c$'
